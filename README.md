@@ -53,15 +53,6 @@ curl http://localhost:3005/transfers/<id>
 curl http://localhost:3005/accounts/acc-1/statement
 ```
 
-## Rodar a bateria de corretude
-
-```bash
-./scripts/test-local.sh java
-# ou, com o container já no ar:
-cd tests/correctness
-API_URL=http://localhost:3005 npx vitest run --reporter=verbose
-```
-
 ## Sobre `DATABASE_URL`
 
 O `DataSourceConfig` aceita tanto `jdbc:postgresql://...` quanto o formato
