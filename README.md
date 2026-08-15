@@ -1,4 +1,4 @@
-# Rinha de Backend — Java 21 / Spring Boot
+# Rinha de Backend - Recriando o PIX - Java 21 / Spring Boot
 
 Implementação em Java 21 + Spring Boot 3.3 + JDBC puro (sem Hibernate) sobre PostgreSQL.
 
