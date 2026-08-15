@@ -1,0 +1,24 @@
+server:
+  port: 3000
+  tomcat:
+    threads:
+      max: 512
+
+spring:
+  threads:
+    virtual:
+      enabled: true # Java 21 virtual threads for request handling + JDBC waits
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+
+rinha:
+  worker:
+    threads: 24        # virtual-thread settlement consumers
+    sweep-interval-ms: 500   # fallback sweep for any pending row missed by the queue
+
+logging:
+  level:
+    root: WARN
+    com.rinha: INFO
