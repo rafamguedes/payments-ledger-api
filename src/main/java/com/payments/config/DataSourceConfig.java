@@ -17,9 +17,16 @@ import java.net.URISyntaxException;
 @Configuration
 public class DataSourceConfig {
 
+    private final PaymentsProperties properties;
+
+    public DataSourceConfig(PaymentsProperties properties) {
+        this.properties = properties;
+    }
+
     @Bean
     public HikariDataSource dataSource(@Value("${DATABASE_URL}") String databaseUrl) {
         HikariConfig config = new HikariConfig();
+        PaymentsProperties.Datasource datasource = properties.getDatasource();
 
         String jdbcUrl = databaseUrl;
         String username = null;
@@ -49,9 +56,9 @@ public class DataSourceConfig {
         config.setPoolName("payments-pool");
         // Keep the pool bounded so PostgreSQL is not overwhelmed with
         // contended connections under bursty API traffic.
-        config.setMaximumPoolSize(32);
-        config.setMinimumIdle(8);
-        config.setConnectionTimeout(5_000);
+        config.setMaximumPoolSize(datasource.getMaximumPoolSize());
+        config.setMinimumIdle(datasource.getMinimumIdle());
+        config.setConnectionTimeout(datasource.getConnectionTimeoutMs());
         config.addDataSourceProperty("reWriteBatchedInserts", "true");
 
         return new HikariDataSource(config);

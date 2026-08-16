@@ -25,6 +25,7 @@ Money is represented as integer cents using `BIGINT`. Floating point values are
 not used for balances or transfer amounts.
 
 The HTTP contract is documented in [docs/api-contract.md](docs/api-contract.md).
+Architecture notes are documented in [docs/architecture.md](docs/architecture.md).
 
 ## Architecture
 
@@ -108,7 +109,10 @@ Important settings:
 - `payments.worker.threads`: number of background settlement consumers.
 - `payments.worker.sweep-interval-ms`: how often the worker scans for pending
   transfers that were not in the in-memory queue.
-- HikariCP pool size is currently configured in `DataSourceConfig`.
+- `payments.datasource.maximum-pool-size`: HikariCP maximum connection count.
+- `payments.datasource.minimum-idle`: HikariCP minimum idle connection count.
+- `payments.datasource.connection-timeout-ms`: maximum wait for a database
+  connection before returning a capacity error.
 
 The default Docker Compose database URL is:
 

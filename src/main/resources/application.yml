@@ -19,6 +19,10 @@ payments:
   worker:
     threads: 4         # leave most JDBC connections available for API requests
     sweep-interval-ms: 500   # fallback sweep for any pending row missed by the queue
+  datasource:
+    maximum-pool-size: 32
+    minimum-idle: 8
+    connection-timeout-ms: 5000
 
 logging:
   level:

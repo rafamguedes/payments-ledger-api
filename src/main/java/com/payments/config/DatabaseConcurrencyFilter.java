@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -16,8 +15,8 @@ public class DatabaseConcurrencyFilter extends OncePerRequestFilter {
 
     private final Semaphore permits;
 
-    public DatabaseConcurrencyFilter(@Value("${payments.http.db-permits:24}") int dbPermits) {
-        this.permits = new Semaphore(dbPermits, true);
+    public DatabaseConcurrencyFilter(PaymentsProperties properties) {
+        this.permits = new Semaphore(properties.getHttp().getDbPermits(), true);
     }
 
     @Override

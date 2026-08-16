@@ -1,5 +1,6 @@
 package com.payments.worker;
 
+import com.payments.config.PaymentsProperties;
 import com.payments.domain.Transfer;
 import com.payments.repo.AccountRepository;
 import com.payments.repo.TransferRepository;
@@ -7,7 +8,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +42,7 @@ public class SettlementWorker {
     private final DataSource dataSource;
     private final AccountRepository accounts;
     private final TransferRepository transfers;
+    private final int workerThreads;
 
     private final BlockingQueue<UUID> queue = new LinkedBlockingQueue<>();
     // Guards against enqueueing (and thus attempting to settle) the same id twice.
@@ -49,13 +50,16 @@ public class SettlementWorker {
 
     private ExecutorService consumers;
 
-    @Value("${payments.worker.threads:4}")
-    private int workerThreads;
-
-    public SettlementWorker(DataSource dataSource, AccountRepository accounts, TransferRepository transfers) {
+    public SettlementWorker(
+            DataSource dataSource,
+            AccountRepository accounts,
+            TransferRepository transfers,
+            PaymentsProperties properties
+    ) {
         this.dataSource = dataSource;
         this.accounts = accounts;
         this.transfers = transfers;
+        this.workerThreads = properties.getWorker().getThreads();
     }
 
     @PostConstruct
