@@ -305,6 +305,10 @@ This establishes the current local production envelope as roughly `110 rps`
 effective throughput for six minutes with `0%` request failures, `p95 < 200 ms`,
 and `p99 < 700 ms`.
 
+# Gatling Metrics
+
+![gatling-metrics.png](gatling-metrics.png)
+
 ## Current Performance Notes
 
 Earlier stress tests showed the main bottleneck was PostgreSQL connection
