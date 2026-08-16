@@ -1,4 +1,4 @@
-package com.rinha.domain;
+package com.payments.domain;
 
 public class ApiExceptions {
 

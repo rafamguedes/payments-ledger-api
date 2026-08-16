@@ -1,42 +1,78 @@
-# Rinha de Backend - Recriando o PIX - Java 21 / Spring Boot
+# Payments Ledger API
 
-Implementação em Java 21 + Spring Boot 3.3 + JDBC puro (sem Hibernate) sobre PostgreSQL.
+Payments Ledger API is a Java 21 / Spring Boot service for account balances,
+idempotent transfer intake, and asynchronous transfer settlement.
 
-## Como funciona
+The project is no longer scoped as a short-lived benchmark prototype. Its
+goal is to evolve into a production-oriented payment ledger service with clear
+API contracts, operational configuration, load testing, and predictable failure
+behavior under pressure.
 
-- **API** (`com.rinha.web`): recebe `POST /transfers`, grava a transferência como
-  `pending` numa única inserção (com `ON CONFLICT (idempotency_key) DO NOTHING`
-  para a idempotência ser resolvida sem race condition) e responde na hora,
-  não espera o worker.
-- **Worker** (`com.rinha.worker.SettlementWorker`): roda no mesmo processo,
-  como pede o desafio para linguagens com runtime "vivo" entre requisições.
-  Usa um pool de **virtual threads** (do Java 21/Loom) consumindo
-  uma fila em memória; cada liquidação é uma transação JDBC que:
-  1. dá `SELECT ... FOR UPDATE` na própria linha da transferência (evita
-     liquidar a mesma duas vezes);
-  2. trava as duas contas envolvidas **sempre na mesma ordem global**
-     (por `id`, lexicograficamente) é isso que evita deadlock em cadeias
-     circulares e fan-in quando várias transferências disputam as mesmas
-     contas ao mesmo tempo;
-  3. só então confere o saldo e decide `completed` ou `failed`.
-  Há também uma varredura periódica (`@Scheduled`, a cada 500ms) que
-  reenfileira qualquer `pending` esquecido e cobre reinício do processo.
+## Scope
 
-Sem Hibernate/JPA de propósito: no meio de 200 requisições concorrentes no
-mesmo carinho de saldo, controlar exatamente o SQL e o momento de cada lock
-é mais previsível do que confiar em locking otimista/gerenciamento de sessão
-de um ORM.
+The service manages accounts and transfers between accounts.
 
-## Rodar localmente
+- `POST /accounts` creates an account with an initial balance.
+- `POST /transfers` accepts a transfer request and returns immediately with a
+  `pending` transfer.
+- A background settlement worker completes or fails pending transfers.
+- `GET /transfers/{id}` returns the current transfer state.
+- `GET /accounts/{id}/statement` returns the account balance and completed
+  transfers.
+- `GET /health` is used by Docker and external health checks.
+
+Money is represented as integer cents using `BIGINT`. Floating point values are
+not used for balances or transfer amounts.
+
+## Architecture
+
+The code is intentionally small and explicit:
+
+- `com.payments.web`: HTTP controllers and DTOs.
+- `com.payments.service`: application use cases.
+- `com.payments.repo`: JDBC repositories.
+- `com.payments.worker`: asynchronous settlement worker.
+- `com.payments.config`: database and runtime configuration.
+- `com.payments.load`: Gatling simulations.
+
+Transfers are first inserted as `pending` with a unique idempotency key. The
+settlement worker later locks the transfer row and both account rows in a stable
+order before applying balance updates. This keeps settlement atomic and prevents
+double settlement.
+
+The API and worker share the same PostgreSQL database. Backpressure is applied
+before JDBC access so bursty HTTP traffic does not create an unbounded queue
+inside HikariCP.
+
+## Requirements
+
+- Docker and Docker Compose
+- Java 21 and Maven, if running without Docker
+- Optional: a local PostgreSQL instance if not using Compose
+
+## Run Locally
+
+Start the application and PostgreSQL:
 
 ```bash
-cd participants/java
 docker compose up --build
 ```
 
+The API will be available at:
+
+```text
+http://localhost:3005
+```
+
+Health check:
+
 ```bash
 curl http://localhost:3005/health
+```
 
+Create accounts and a transfer:
+
+```bash
 curl -X POST http://localhost:3005/accounts \
   -H "Content-Type: application/json" \
   -d '{"id": "acc-1", "balance": 100000}'
@@ -48,25 +84,106 @@ curl -X POST http://localhost:3005/accounts \
 curl -X POST http://localhost:3005/transfers \
   -H "Content-Type: application/json" \
   -d '{"payerId": "acc-1", "payeeId": "acc-2", "amount": 2500, "idempotencyKey": "abc-123"}'
+```
 
-curl http://localhost:3005/transfers/<id>
+Read data:
+
+```bash
+curl http://localhost:3005/transfers/<transfer-id>
 curl http://localhost:3005/accounts/acc-1/statement
 ```
 
-## Sobre `DATABASE_URL`
+## Configuration
 
-O `DataSourceConfig` aceita tanto `jdbc:postgresql://...` quanto o formato
-`postgres://user:pass@host:5432/db` se a `DATABASE_URL` do ambiente vier
-num formato diferente do usado aqui, ajuste `DataSourceConfig.java`.
+The main runtime configuration lives in `src/main/resources/application.yml`.
 
-## Ajustes de performance já feitos
+Important settings:
 
-- `spring.threads.virtual.enabled=true`: cada requisição HTTP roda numa
-  virtual thread, bloquear em JDBC não consome uma thread de plataforma.
-- HikariCP com pool moderado (32 conexões máx.) para não sufocar o Postgres,
-  que só tem 0.5 CPU / 1GB.
-- JDBC puro com `RowMapper`s manuais, sem reflection/proxy do Hibernate no
-  caminho quente.
-- Índices em `transfers(status, created_at)` (para o worker) e em
-  `transfers(payer_id/payee_id, created_at) WHERE status = 'completed'`
-  (para o extrato).
+- `DATABASE_URL`: PostgreSQL connection string. Both `postgres://...` and
+  `jdbc:postgresql://...` formats are supported.
+- `payments.http.db-permits`: maximum number of DB-bound HTTP requests allowed
+  to enter JDBC concurrently.
+- `payments.worker.threads`: number of background settlement consumers.
+- `payments.worker.sweep-interval-ms`: how often the worker scans for pending
+  transfers that were not in the in-memory queue.
+- HikariCP pool size is currently configured in `DataSourceConfig`.
+
+The default Docker Compose database URL is:
+
+```text
+postgres://payments:payments@postgres:5432/payments
+```
+
+If an old local Compose volume was created with previous database credentials,
+the PostgreSQL volume must be recreated before the new credentials will apply.
+
+## Load Testing
+
+Gatling is the official load testing tool for this project.
+
+Available simulations:
+
+- `com.payments.load.ThroughputSimulation`
+- `com.payments.load.LatencySimulation`
+
+Run throughput with local Maven:
+
+```bash
+mvn gatling:test \
+  -Dgatling.simulationClass=com.payments.load.ThroughputSimulation \
+  -DbaseUrl=http://localhost:3005
+```
+
+Run latency with local Maven:
+
+```bash
+mvn gatling:test \
+  -Dgatling.simulationClass=com.payments.load.LatencySimulation \
+  -DbaseUrl=http://localhost:3005
+```
+
+Run via Docker when Maven is not installed locally:
+
+```bash
+docker run --rm \
+  -v "$PWD:/workspace" \
+  -v maven-repo:/root/.m2 \
+  -w /workspace \
+  maven:3.9.9-eclipse-temurin-21 \
+  mvn gatling:test \
+  -Dgatling.simulationClass=com.payments.load.ThroughputSimulation \
+  -DbaseUrl=http://host.docker.internal:3005
+```
+
+Useful Gatling parameters:
+
+- `-Daccounts=50`: number of accounts seeded before the test.
+- `-DseedBalance=100000000`: starting balance for seeded accounts.
+- `-DtargetRps=200`: target request rate for `ThroughputSimulation`.
+- `-DconcurrentUsers=50`: concurrent users for `LatencySimulation`.
+
+Reports are generated under:
+
+```text
+target/gatling/
+```
+
+## Current Performance Notes
+
+Recent load tests showed the main bottleneck is PostgreSQL connection pressure:
+
+```text
+Connection is not available, request timed out after 5000ms
+```
+
+The production direction is to avoid HTTP 500s caused by saturation by applying
+backpressure before HikariCP, reducing worker/database contention, and improving
+statement queries as data volume grows.
+
+Near-term tuning priorities:
+
+- Keep DB-bound HTTP concurrency below the effective Hikari/PostgreSQL capacity.
+- Keep worker concurrency conservative so settlement does not starve the API.
+- Optimize account statements to avoid expensive scans as transfers accumulate.
+- Convert expected saturation into controlled `429` or `503` responses instead
+  of unhandled server errors.

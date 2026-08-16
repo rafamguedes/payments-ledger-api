@@ -1,6 +1,6 @@
-package com.rinha.repo;
+package com.payments.repo;
 
-import com.rinha.domain.Account;
+import com.payments.domain.Account;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

@@ -1,7 +1,7 @@
-package com.rinha.web;
+package com.payments.web;
 
-import com.rinha.domain.Transfer;
-import com.rinha.service.TransferService;
+import com.payments.domain.Transfer;
+import com.payments.service.TransferService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +31,7 @@ public class TransferController {
         try {
             uuid = UUID.fromString(id);
         } catch (IllegalArgumentException e) {
-            throw new com.rinha.domain.ApiExceptions.NotFoundException("transfer not found: " + id);
+            throw new com.payments.domain.ApiExceptions.NotFoundException("transfer not found: " + id);
         }
         return ResponseEntity.ok(service.get(uuid));
     }

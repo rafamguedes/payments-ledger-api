@@ -1,6 +1,6 @@
-package com.rinha.repo;
+package com.payments.repo;
 
-import com.rinha.domain.Transfer;
+import com.payments.domain.Transfer;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;

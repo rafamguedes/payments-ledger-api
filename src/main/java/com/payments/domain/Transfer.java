@@ -1,4 +1,4 @@
-package com.rinha.domain;
+package com.payments.domain;
 
 import java.time.Instant;
 import java.util.UUID;

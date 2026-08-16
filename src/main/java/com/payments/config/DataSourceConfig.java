@@ -1,4 +1,4 @@
-package com.rinha.config;
+package com.payments.config;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -46,9 +46,9 @@ public class DataSourceConfig {
             config.setPassword(password);
         }
         config.setDriverClassName("org.postgresql.Driver");
-        config.setPoolName("rinha-pool");
-        // App gets 1.5 CPU / 3GB total; keep the pool modest so Postgres
-        // (0.5 CPU / 1GB) isn't overwhelmed with contended connections.
+        config.setPoolName("payments-pool");
+        // Keep the pool bounded so PostgreSQL is not overwhelmed with
+        // contended connections under bursty API traffic.
         config.setMaximumPoolSize(32);
         config.setMinimumIdle(8);
         config.setConnectionTimeout(5_000);

@@ -1,4 +1,4 @@
--- Schema for the Rinha de Backend PIX challenge.
+-- Schema for the Payments Ledger API.
 -- Money is always an integer number of cents (BIGINT) — never a float.
 
 CREATE TABLE IF NOT EXISTS accounts (

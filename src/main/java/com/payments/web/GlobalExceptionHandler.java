@@ -1,8 +1,8 @@
-package com.rinha.web;
+package com.payments.web;
 
-import com.rinha.domain.ApiExceptions.ConflictException;
-import com.rinha.domain.ApiExceptions.NotFoundException;
-import com.rinha.domain.ApiExceptions.UnprocessableEntityException;
+import com.payments.domain.ApiExceptions.ConflictException;
+import com.payments.domain.ApiExceptions.NotFoundException;
+import com.payments.domain.ApiExceptions.UnprocessableEntityException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;

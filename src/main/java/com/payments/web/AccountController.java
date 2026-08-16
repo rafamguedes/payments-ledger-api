@@ -1,7 +1,7 @@
-package com.rinha.web;
+package com.payments.web;
 
-import com.rinha.domain.Account;
-import com.rinha.service.AccountService;
+import com.payments.domain.Account;
+import com.payments.service.AccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

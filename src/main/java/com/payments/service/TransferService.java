@@ -1,11 +1,11 @@
-package com.rinha.service;
+package com.payments.service;
 
-import com.rinha.domain.ApiExceptions.NotFoundException;
-import com.rinha.domain.ApiExceptions.UnprocessableEntityException;
-import com.rinha.domain.Transfer;
-import com.rinha.repo.AccountRepository;
-import com.rinha.repo.TransferRepository;
-import com.rinha.worker.SettlementWorker;
+import com.payments.domain.ApiExceptions.NotFoundException;
+import com.payments.domain.ApiExceptions.UnprocessableEntityException;
+import com.payments.domain.Transfer;
+import com.payments.repo.TransferRepository;
+import com.payments.worker.SettlementWorker;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -13,12 +13,10 @@ import java.util.UUID;
 @Service
 public class TransferService {
 
-    private final AccountRepository accounts;
     private final TransferRepository transfers;
     private final SettlementWorker worker;
 
-    public TransferService(AccountRepository accounts, TransferRepository transfers, SettlementWorker worker) {
-        this.accounts = accounts;
+    public TransferService(TransferRepository transfers, SettlementWorker worker) {
         this.transfers = transfers;
         this.worker = worker;
     }
@@ -30,22 +28,15 @@ public class TransferService {
         validatePayload(payerId, payeeId, amount, idempotencyKey);
 
         // Idempotency wins over existence checks: replaying an already-known
-        // key must always return the original, unchanged, regardless of what
-        // else is in the body.
-        var existing = transfers.findByIdempotencyKey(idempotencyKey);
-        if (existing.isPresent()) {
-            return new Outcome(existing.get(), false);
+        // key must always return the original. The insert handles that race
+        // with ON CONFLICT; avoiding pre-check queries keeps the hot path to
+        // one DB round trip for new transfers.
+        TransferRepository.Result result;
+        try {
+            result = transfers.insertPendingOrGetExisting(payerId, payeeId, amount, idempotencyKey);
+        } catch (DataIntegrityViolationException e) {
+            throw new UnprocessableEntityException("payerId or payeeId does not exist");
         }
-
-        if (!accounts.exists(payerId)) {
-            throw new UnprocessableEntityException("payerId does not exist: " + payerId);
-        }
-        if (!accounts.exists(payeeId)) {
-            throw new UnprocessableEntityException("payeeId does not exist: " + payeeId);
-        }
-
-        TransferRepository.Result result =
-                transfers.insertPendingOrGetExisting(payerId, payeeId, amount, idempotencyKey);
 
         if (result.created()) {
             worker.enqueue(result.transfer().id());

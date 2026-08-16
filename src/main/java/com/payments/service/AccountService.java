@@ -1,12 +1,12 @@
-package com.rinha.service;
+package com.payments.service;
 
-import com.rinha.domain.Account;
-import com.rinha.domain.ApiExceptions.ConflictException;
-import com.rinha.domain.ApiExceptions.NotFoundException;
-import com.rinha.domain.ApiExceptions.UnprocessableEntityException;
-import com.rinha.domain.Transfer;
-import com.rinha.repo.AccountRepository;
-import com.rinha.repo.TransferRepository;
+import com.payments.domain.Account;
+import com.payments.domain.ApiExceptions.ConflictException;
+import com.payments.domain.ApiExceptions.NotFoundException;
+import com.payments.domain.ApiExceptions.UnprocessableEntityException;
+import com.payments.domain.Transfer;
+import com.payments.repo.AccountRepository;
+import com.payments.repo.TransferRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

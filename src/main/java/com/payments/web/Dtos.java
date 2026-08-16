@@ -1,6 +1,6 @@
-package com.rinha.web;
+package com.payments.web;
 
-import com.rinha.domain.Transfer;
+import com.payments.domain.Transfer;
 
 import java.util.List;
 

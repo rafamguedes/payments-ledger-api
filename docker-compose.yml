@@ -4,7 +4,7 @@ services:
     ports:
       - "3005:3000"
     environment:
-      DATABASE_URL: "postgres://rinha:rinha@postgres:5432/rinha"
+      DATABASE_URL: "postgres://payments:payments@postgres:5432/payments"
     depends_on:
       postgres:
         condition: service_healthy
@@ -23,13 +23,13 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_USER: rinha
-      POSTGRES_PASSWORD: rinha
-      POSTGRES_DB: rinha
+      POSTGRES_USER: payments
+      POSTGRES_PASSWORD: payments
+      POSTGRES_DB: payments
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rinha -d rinha"]
+      test: ["CMD-SHELL", "pg_isready -U payments -d payments"]
       interval: 5s
       timeout: 3s
       retries: 10

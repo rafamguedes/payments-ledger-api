@@ -1,8 +1,8 @@
-package com.rinha.worker;
+package com.payments.worker;
 
-import com.rinha.domain.Transfer;
-import com.rinha.repo.AccountRepository;
-import com.rinha.repo.TransferRepository;
+import com.payments.domain.Transfer;
+import com.payments.repo.AccountRepository;
+import com.payments.repo.TransferRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public class SettlementWorker {
 
     private ExecutorService consumers;
 
-    @Value("${rinha.worker.threads:24}")
+    @Value("${payments.worker.threads:4}")
     private int workerThreads;
 
     public SettlementWorker(DataSource dataSource, AccountRepository accounts, TransferRepository transfers) {
@@ -87,7 +87,7 @@ public class SettlementWorker {
      * Fallback sweep: catches any pending transfer that, for whatever reason
      * (e.g. this instance restarted), isn't currently tracked in memory.
      */
-    @Scheduled(fixedDelayString = "${rinha.worker.sweep-interval-ms:500}")
+    @Scheduled(fixedDelayString = "${payments.worker.sweep-interval-ms:500}")
     public void sweep() {
         for (UUID id : transfers.findPendingIds(500)) {
             enqueue(id);
