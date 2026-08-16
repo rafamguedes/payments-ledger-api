@@ -26,6 +26,7 @@ not used for balances or transfer amounts.
 
 The HTTP contract is documented in [docs/api-contract.md](docs/api-contract.md).
 Architecture notes are documented in [docs/architecture.md](docs/architecture.md).
+Observability notes are documented in [docs/observability.md](docs/observability.md).
 
 ## Architecture
 
@@ -73,6 +74,13 @@ Health check:
 
 ```bash
 curl http://localhost:3005/health
+```
+
+Actuator readiness and Prometheus metrics:
+
+```bash
+curl http://localhost:3005/actuator/health/readiness
+curl http://localhost:3005/actuator/prometheus
 ```
 
 Create accounts and a transfer:
@@ -197,6 +205,16 @@ Reports are generated under:
 ```text
 target/gatling/
 ```
+
+During a load test, inspect runtime pressure with:
+
+```bash
+curl -s http://localhost:3005/actuator/prometheus | grep hikaricp_connections
+curl -s http://localhost:3005/actuator/prometheus | grep payments_settlement
+```
+
+The key saturation signals are Hikari pending connections, Hikari connection
+timeouts, settlement queue size, settlement errors, and HTTP status distribution.
 
 ## Current Performance Notes
 

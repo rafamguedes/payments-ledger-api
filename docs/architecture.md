@@ -13,6 +13,9 @@ pending transfers.
 - `config`: runtime configuration, HikariCP setup, and HTTP backpressure.
 - `load`: Gatling simulations for throughput and latency validation.
 
+Operational metrics are exposed through Actuator and documented in
+[observability.md](observability.md).
+
 ## Request Flow
 
 Account creation and read endpoints execute synchronously against PostgreSQL.
@@ -95,8 +98,7 @@ The production direction is:
 Near-term improvements:
 
 - Persist an outbox or durable worker queue for stronger recovery guarantees.
-- Add structured logs and metrics for pool usage, queue depth, settlement rate,
-  and error codes.
+- Add structured logs for request correlation and settlement retries.
 - Add authentication and authorization before exposing the API outside a trusted
   environment.
 - Define service-level objectives for latency, successful intake rate, and
