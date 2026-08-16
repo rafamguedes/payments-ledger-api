@@ -78,6 +78,11 @@ Status codes:
 
 Returns the account balance and completed transfers for the account.
 
+Query parameters:
+
+- `limit`: optional maximum number of completed transfers returned. Defaults to
+  `50`; maximum accepted value is `500`.
+
 Response:
 
 ```json
@@ -103,6 +108,7 @@ Status codes:
 
 - `200 OK`: statement returned.
 - `404 Not Found`: account does not exist.
+- `422 Unprocessable Entity`: invalid `limit`.
 - `503 Service Unavailable`: temporary database capacity exhaustion.
 
 ## Transfers

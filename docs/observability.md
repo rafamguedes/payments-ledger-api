@@ -102,7 +102,9 @@ The production target is not "no rejected requests under unlimited load". The
 target is:
 
 - no generic HTTP 500 for known capacity pressure;
-- controlled `503 Service Unavailable` when the database is saturated;
+- zero failed requests at the agreed production traffic envelope;
+- controlled `503 Service Unavailable` only when traffic exceeds that envelope;
+- short client-side retries for transient network or capacity blips;
 - stable Hikari pending connections;
 - bounded settlement queue growth;
 - no unexpected settlement errors.

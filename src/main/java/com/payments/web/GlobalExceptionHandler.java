@@ -3,13 +3,14 @@ package com.payments.web;
 import com.payments.domain.ApiExceptions.ConflictException;
 import com.payments.domain.ApiExceptions.NotFoundException;
 import com.payments.domain.ApiExceptions.UnprocessableEntityException;
-import org.springframework.dao.QueryTimeoutException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,7 +40,15 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_request", "malformed or invalid request body");
     }
 
-    @ExceptionHandler({CannotGetJdbcConnectionException.class, QueryTimeoutException.class})
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Dtos.ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_request", "invalid request parameter");
+    }
+
+    @ExceptionHandler({
+            DataAccessResourceFailureException.class,
+            TransientDataAccessException.class
+    })
     public ResponseEntity<Dtos.ErrorResponse> handleDatabaseUnavailable(Exception e) {
         return error(HttpStatus.SERVICE_UNAVAILABLE, "service_unavailable", "database capacity temporarily exhausted");
     }

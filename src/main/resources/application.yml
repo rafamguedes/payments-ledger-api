@@ -18,10 +18,10 @@ spring:
 
 payments:
   http:
-    db-permits: 24      # cap DB-bound request concurrency before Hikari queues
-    db-permit-timeout-ms: 250   # fail fast with 503 instead of queuing indefinitely
+    db-permits: 28      # cap DB-bound request concurrency before Hikari queues
+    db-permit-timeout-ms: 2000  # allow normal bursts, still fail controlled overload
   worker:
-    threads: 4         # leave most JDBC connections available for API requests
+    threads: 3         # leave most JDBC connections available for API requests
     sweep-interval-ms: 500   # fallback sweep for any pending row missed by the queue
   datasource:
     maximum-pool-size: 32

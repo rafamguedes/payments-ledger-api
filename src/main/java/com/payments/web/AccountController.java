@@ -22,8 +22,11 @@ public class AccountController {
     }
 
     @GetMapping("/accounts/{id}/statement")
-    public ResponseEntity<Dtos.StatementResponse> statement(@PathVariable String id) {
-        AccountService.Statement s = service.statement(id);
+    public ResponseEntity<Dtos.StatementResponse> statement(
+            @PathVariable String id,
+            @RequestParam(required = false) Integer limit
+    ) {
+        AccountService.Statement s = service.statement(id, limit);
         return ResponseEntity.ok(Dtos.StatementResponse.from(s.accountId(), s.balance(), s.transfers()));
     }
 }

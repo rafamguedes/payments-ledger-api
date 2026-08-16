@@ -165,6 +165,7 @@ Available simulations:
 
 - `com.payments.load.ThroughputSimulation`
 - `com.payments.load.LatencySimulation`
+- `com.payments.load.ProductionSimulation`
 
 Run throughput with local Maven:
 
@@ -182,6 +183,22 @@ mvn gatling:test \
   -DbaseUrl=http://localhost:3005
 ```
 
+Run a production-like profile with more total traffic and zero failed request
+assertion:
+
+```bash
+mvn gatling:test \
+  -Dgatling.simulationClass=com.payments.load.ProductionSimulation \
+  -DbaseUrl=http://localhost:3005 \
+  -DtargetRps=120 \
+  -DrampSeconds=60 \
+  -DdurationSeconds=300 \
+  -Daccounts=200 \
+  -DseedTransfers=500 \
+  -DretryAttempts=3 \
+  -DretryPauseMs=200
+```
+
 Run via Docker when Maven is not installed locally:
 
 ```bash
@@ -195,12 +212,36 @@ docker run --rm \
   -DbaseUrl=http://host.docker.internal:3005
 ```
 
+Run the production-like profile via Docker:
+
+```bash
+docker run --rm \
+  -v "$PWD:/workspace" \
+  -v maven-repo:/root/.m2 \
+  -w /workspace \
+  maven:3.9.9-eclipse-temurin-21 \
+  mvn gatling:test \
+  -Dgatling.simulationClass=com.payments.load.ProductionSimulation \
+  -DbaseUrl=http://host.docker.internal:3005 \
+  -DtargetRps=120 \
+  -DrampSeconds=60 \
+  -DdurationSeconds=300 \
+  -Daccounts=200 \
+  -DseedTransfers=500 \
+  -DretryAttempts=3 \
+  -DretryPauseMs=200
+```
+
 Useful Gatling parameters:
 
 - `-Daccounts=50`: number of accounts seeded before the test.
 - `-DseedBalance=100000000`: starting balance for seeded accounts.
 - `-DtargetRps=200`: target request rate for `ThroughputSimulation`.
 - `-DconcurrentUsers=50`: concurrent users for `LatencySimulation`.
+- `-DrampSeconds=60`: ramp-up duration for `ProductionSimulation`.
+- `-DdurationSeconds=300`: sustained traffic duration for `ProductionSimulation`.
+- `-DretryAttempts=3`: attempts per operation in `ProductionSimulation`.
+- `-DretryPauseMs=200`: pause between retry attempts in `ProductionSimulation`.
 
 Reports are generated under:
 
@@ -220,17 +261,63 @@ The key saturation signals are Hikari pending connections, Hikari connection
 timeouts, DB permit rejections, settlement queue size, settlement errors, and
 HTTP status distribution.
 
+## Measured Production-Like Baseline
+
+Latest local production-like Gatling run:
+
+```text
+Simulation: com.payments.load.ProductionSimulation
+Target RPS: 120
+Ramp-up: 60 seconds
+Sustained duration: 300 seconds
+Seed accounts: 200
+Seed transfers: 500
+Retry attempts: 3
+Retry pause: 200 ms
+```
+
+Measured result:
+
+| Metric | Value |
+|---|---:|
+| Total requests | 39,690 |
+| Successful requests | 39,690 |
+| Failed requests | 0 |
+| Error rate | 0% |
+| Mean throughput | 109.94 rps |
+| Mean response time | 32 ms |
+| p50 response time | 4 ms |
+| p75 response time | 7 ms |
+| p95 response time | 174 ms |
+| p99 response time | 667 ms |
+| Max response time | 1,768 ms |
+
+Response time distribution:
+
+| Bucket | Count | Percentage |
+|---|---:|---:|
+| `t < 800 ms` | 39,440 | 99.37% |
+| `800 ms <= t < 1200 ms` | 212 | 0.53% |
+| `t >= 1200 ms` | 38 | 0.10% |
+| Failed | 0 | 0% |
+
+This establishes the current local production envelope as roughly `110 rps`
+effective throughput for six minutes with `0%` request failures, `p95 < 200 ms`,
+and `p99 < 700 ms`.
+
 ## Current Performance Notes
 
-Recent load tests showed the main bottleneck is PostgreSQL connection pressure:
+Earlier stress tests showed the main bottleneck was PostgreSQL connection
+pressure:
 
 ```text
 Connection is not available, request timed out after 5000ms
 ```
 
-The production direction is to avoid HTTP 500s caused by saturation by applying
-backpressure before HikariCP, reducing worker/database contention, and improving
-statement queries as data volume grows.
+The current production direction is to preserve the measured zero-failure
+envelope while increasing traffic gradually. Saturation should be exposed as
+controlled `503 Service Unavailable` responses outside the agreed envelope, not
+as generic HTTP 500 errors.
 
 Near-term tuning priorities:
 

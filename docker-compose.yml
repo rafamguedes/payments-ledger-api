@@ -14,11 +14,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 15s
-    deploy:
-      resources:
-        limits:
-          cpus: "1.5"
-          memory: "3GB"
 
   postgres:
     image: postgres:18-alpine
@@ -35,8 +30,3 @@ services:
       postgres
       -c max_connections=100
       -c shared_buffers=256MB
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "1GB"

@@ -47,9 +47,19 @@ public class AccountService {
     public record Statement(String accountId, long balance, List<Transfer> transfers) {
     }
 
-    public Statement statement(String id) {
+    public Statement statement(String id, Integer limit) {
         Account account = get(id);
-        List<Transfer> completed = transfers.findCompletedForAccount(id);
+        List<Transfer> completed = transfers.findCompletedForAccount(id, normalizeLimit(limit));
         return new Statement(account.id(), account.balance(), completed);
+    }
+
+    private int normalizeLimit(Integer limit) {
+        if (limit == null) {
+            return 50;
+        }
+        if (limit < 1) {
+            throw new UnprocessableEntityException("limit must be positive");
+        }
+        return Math.min(limit, 500);
     }
 }

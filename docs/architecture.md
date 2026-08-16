@@ -19,6 +19,8 @@ Operational metrics are exposed through Actuator and documented in
 ## Request Flow
 
 Account creation and read endpoints execute synchronously against PostgreSQL.
+Statement reads return a bounded recent history window so the endpoint remains
+predictable as transfer volume grows.
 
 Transfer creation is split into two stages:
 

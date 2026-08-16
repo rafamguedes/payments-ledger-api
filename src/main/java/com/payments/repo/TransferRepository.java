@@ -77,14 +77,15 @@ public class TransferRepository {
                 .stream().findFirst();
     }
 
-    public List<Transfer> findCompletedForAccount(String accountId) {
+    public List<Transfer> findCompletedForAccount(String accountId, int limit) {
         return jdbc.query(
                 """
                 SELECT * FROM transfers
                 WHERE status = 'completed' AND (payer_id = ? OR payee_id = ?)
                 ORDER BY created_at DESC
+                LIMIT ?
                 """,
-                MAPPER, accountId, accountId);
+                MAPPER, accountId, accountId, limit);
     }
 
     /** Fallback sweep: pending rows the in-memory queue might have missed (e.g. after a restart). */

@@ -42,7 +42,7 @@ public class LatencySimulation extends Simulation {
 
     private final ChainBuilder getStatement = feed(PixLoadSupport.statementFeeder(accountIds))
             .exec(http("GET /accounts/{id}/statement")
-                    .get("/accounts/#{accountId}/statement")
+                    .get("/accounts/#{accountId}/statement?limit=50")
                     .check(status().is(200)));
 
     private final ChainBuilder getTransfer = feed(PixLoadSupport.transferReadFeeder(transferIds))
