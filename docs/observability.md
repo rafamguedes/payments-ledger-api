@@ -54,6 +54,12 @@ Custom settlement metrics:
 - `payments_settlement_in_flight_size`
 - `payments_settlement_worker_threads`
 
+Custom HTTP admission metrics:
+
+- `payments_http_db_permits_available`
+- `payments_http_db_permits_rejected_total`
+- `payments_http_db_permits_interrupted_total`
+
 All metrics include the `application="payments-ledger-api"` tag.
 
 ## Load Test Reading
@@ -65,6 +71,8 @@ During Gatling runs, the first signals to watch are:
 - `hikaricp_connections_timeout_total`: should not increase during a stable
   test. If it increases, the API is still admitting more DB work than the pool
   can serve.
+- `payments_http_db_permits_rejected_total`: may increase during overload. This
+  is controlled backpressure, not an unexpected application failure.
 - `payments_settlement_queue_size`: shows worker backlog. Growth means intake is
   faster than settlement.
 - `payments_settlement_errors_total`: should stay flat. Growth here means
@@ -84,6 +92,7 @@ Example focused checks:
 
 ```bash
 curl -s http://localhost:3005/actuator/prometheus | grep hikaricp_connections
+curl -s http://localhost:3005/actuator/prometheus | grep payments_http_db_permits
 curl -s http://localhost:3005/actuator/prometheus | grep payments_settlement
 ```
 

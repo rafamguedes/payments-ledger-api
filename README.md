@@ -116,6 +116,8 @@ Important settings:
   `jdbc:postgresql://...` formats are supported.
 - `payments.http.db-permits`: maximum number of DB-bound HTTP requests allowed
   to enter JDBC concurrently.
+- `payments.http.db-permit-timeout-ms`: maximum wait for a DB concurrency permit
+  before returning `503 Service Unavailable`.
 - `payments.worker.threads`: number of background settlement consumers.
 - `payments.worker.sweep-interval-ms`: how often the worker scans for pending
   transfers that were not in the in-memory queue.
@@ -210,11 +212,13 @@ During a load test, inspect runtime pressure with:
 
 ```bash
 curl -s http://localhost:3005/actuator/prometheus | grep hikaricp_connections
+curl -s http://localhost:3005/actuator/prometheus | grep payments_http_db_permits
 curl -s http://localhost:3005/actuator/prometheus | grep payments_settlement
 ```
 
 The key saturation signals are Hikari pending connections, Hikari connection
-timeouts, settlement queue size, settlement errors, and HTTP status distribution.
+timeouts, DB permit rejections, settlement queue size, settlement errors, and
+HTTP status distribution.
 
 ## Current Performance Notes
 
@@ -231,6 +235,8 @@ statement queries as data volume grows.
 Near-term tuning priorities:
 
 - Keep DB-bound HTTP concurrency below the effective Hikari/PostgreSQL capacity.
+- Tune `payments.http.db-permit-timeout-ms` so overload fails fast without
+  rejecting normal short bursts.
 - Keep worker concurrency conservative so settlement does not starve the API.
 - Optimize account statements to avoid expensive scans as transfers accumulate.
 - Convert expected saturation into controlled `429` or `503` responses instead

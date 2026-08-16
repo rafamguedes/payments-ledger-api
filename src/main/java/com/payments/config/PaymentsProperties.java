@@ -23,6 +23,7 @@ public class PaymentsProperties {
 
     public static class Http {
         private int dbPermits = 24;
+        private long dbPermitTimeoutMs = 250;
 
         public int getDbPermits() {
             return dbPermits;
@@ -30,6 +31,14 @@ public class PaymentsProperties {
 
         public void setDbPermits(int dbPermits) {
             this.dbPermits = dbPermits;
+        }
+
+        public long getDbPermitTimeoutMs() {
+            return dbPermitTimeoutMs;
+        }
+
+        public void setDbPermitTimeoutMs(long dbPermitTimeoutMs) {
+            this.dbPermitTimeoutMs = dbPermitTimeoutMs;
         }
     }
 

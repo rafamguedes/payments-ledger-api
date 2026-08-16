@@ -55,6 +55,10 @@ HTTP traffic is limited before it enters the JDBC layer. The
 run at the same time. This prevents an unbounded queue inside HikariCP and keeps
 overload behavior easier to reason about.
 
+Requests wait for a permit only up to `payments.http.db-permit-timeout-ms`. When
+that timeout is reached, the API returns a controlled `503 Service Unavailable`
+instead of allowing request latency to grow without a clear bound.
+
 The worker has an independent `payments.worker.threads` limit. This should stay
 conservative because worker settlement and HTTP requests share the same
 PostgreSQL connection pool.

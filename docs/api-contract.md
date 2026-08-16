@@ -170,8 +170,9 @@ Status codes:
 ## Operational Semantics
 
 The API is designed to prefer explicit backpressure over unbounded request
-admission. Under sustained overload, clients should expect either slower
-responses or `503 Service Unavailable`, not generic server errors.
+admission. Under sustained overload, requests that cannot enter the DB-bound
+execution path within the configured timeout receive `503 Service Unavailable`,
+not generic server errors.
 
 Clients should retry `503` responses with exponential backoff and should reuse
 the same idempotency key when retrying `POST /transfers`.
