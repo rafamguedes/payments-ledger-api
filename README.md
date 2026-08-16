@@ -24,6 +24,8 @@ The service manages accounts and transfers between accounts.
 Money is represented as integer cents using `BIGINT`. Floating point values are
 not used for balances or transfer amounts.
 
+The HTTP contract is documented in [docs/api-contract.md](docs/api-contract.md).
+
 ## Architecture
 
 The code is intentionally small and explicit:

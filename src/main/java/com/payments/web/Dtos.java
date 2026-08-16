@@ -18,7 +18,7 @@ public class Dtos {
         }
     }
 
-    public record ErrorResponse(String error) {
+    public record ErrorResponse(String code, String message) {
     }
 
     private Dtos() {

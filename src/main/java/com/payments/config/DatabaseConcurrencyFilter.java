@@ -38,7 +38,11 @@ public class DatabaseConcurrencyFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "request interrupted");
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            response.setContentType("application/json");
+            response.getWriter().write("""
+                    {"code":"service_unavailable","message":"request interrupted"}
+                    """);
         } finally {
             if (acquired) {
                 permits.release();

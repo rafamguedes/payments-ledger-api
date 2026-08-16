@@ -3,8 +3,10 @@ package com.payments.web;
 import com.payments.domain.ApiExceptions.ConflictException;
 import com.payments.domain.ApiExceptions.NotFoundException;
 import com.payments.domain.ApiExceptions.UnprocessableEntityException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -14,17 +16,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnprocessableEntityException.class)
     public ResponseEntity<Dtos.ErrorResponse> handleUnprocessable(UnprocessableEntityException e) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new Dtos.ErrorResponse(e.getMessage()));
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_request", e.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Dtos.ErrorResponse> handleConflict(ConflictException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new Dtos.ErrorResponse(e.getMessage()));
+        return error(HttpStatus.CONFLICT, "conflict", e.getMessage());
     }
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Dtos.ErrorResponse> handleNotFound(NotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Dtos.ErrorResponse(e.getMessage()));
+        return error(HttpStatus.NOT_FOUND, "not_found", e.getMessage());
     }
 
     /**
@@ -34,7 +36,15 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Dtos.ErrorResponse> handleUnreadable(HttpMessageNotReadableException e) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(new Dtos.ErrorResponse("malformed or invalid request body"));
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_request", "malformed or invalid request body");
+    }
+
+    @ExceptionHandler({CannotGetJdbcConnectionException.class, QueryTimeoutException.class})
+    public ResponseEntity<Dtos.ErrorResponse> handleDatabaseUnavailable(Exception e) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, "service_unavailable", "database capacity temporarily exhausted");
+    }
+
+    private ResponseEntity<Dtos.ErrorResponse> error(HttpStatus status, String code, String message) {
+        return ResponseEntity.status(status).body(new Dtos.ErrorResponse(code, message));
     }
 }
