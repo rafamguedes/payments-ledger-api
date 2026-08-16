@@ -64,9 +64,13 @@ HikariCP is configured through `payments.datasource.*`:
 
 ## Persistence Boundaries
 
-PostgreSQL is the source of truth. The in-memory queue is only an acceleration
-mechanism; correctness depends on persisted `pending` rows and the sweep
-process, not on the queue surviving restarts.
+PostgreSQL is the source of truth. Schema changes are managed by Flyway
+migrations in `src/main/resources/db/migration`, so database evolution is
+versioned with the application code.
+
+The in-memory queue is only an acceleration mechanism; correctness depends on
+persisted `pending` rows and the sweep process, not on the queue surviving
+restarts.
 
 Balances are stored as integer cents. Transfer settlement updates balances and
 transfer status in the same transaction so clients never observe a completed
@@ -91,7 +95,6 @@ The production direction is:
 Near-term improvements:
 
 - Persist an outbox or durable worker queue for stronger recovery guarantees.
-- Add database migration tooling such as Flyway or Liquibase.
 - Add structured logs and metrics for pool usage, queue depth, settlement rate,
   and error codes.
 - Add authentication and authorization before exposing the API outside a trusted

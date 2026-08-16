@@ -1,12 +1,12 @@
--- Schema for the Payments Ledger API.
--- Money is always an integer number of cents (BIGINT) — never a float.
+-- Base schema for the Payments Ledger API.
+-- Money is always an integer number of cents (BIGINT), never a float.
 
-CREATE TABLE IF NOT EXISTS accounts (
+CREATE TABLE accounts (
     id      VARCHAR(64) PRIMARY KEY,
     balance BIGINT NOT NULL CHECK (balance >= 0)
 );
 
-CREATE TABLE IF NOT EXISTS transfers (
+CREATE TABLE transfers (
     id               UUID PRIMARY KEY,
     payer_id         VARCHAR(64) NOT NULL REFERENCES accounts (id),
     payee_id         VARCHAR(64) NOT NULL REFERENCES accounts (id),
@@ -18,13 +18,14 @@ CREATE TABLE IF NOT EXISTS transfers (
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- The worker polls/sweeps pending transfers.
-CREATE INDEX IF NOT EXISTS idx_transfers_status_created
+-- The worker polls and sweeps pending transfers.
+CREATE INDEX idx_transfers_status_created
     ON transfers (status, created_at);
 
 -- The statement endpoint looks up completed transfers per account,
 -- newest first, on both sides of the transfer.
-CREATE INDEX IF NOT EXISTS idx_transfers_payer_completed
+CREATE INDEX idx_transfers_payer_completed
     ON transfers (payer_id, created_at DESC) WHERE status = 'completed';
-CREATE INDEX IF NOT EXISTS idx_transfers_payee_completed
+
+CREATE INDEX idx_transfers_payee_completed
     ON transfers (payee_id, created_at DESC) WHERE status = 'completed';

@@ -52,6 +52,8 @@ inside HikariCP.
 - Docker and Docker Compose
 - Java 21 and Maven, if running without Docker
 - Optional: a local PostgreSQL instance if not using Compose
+- PostgreSQL schema changes are managed by Flyway migrations in
+  `src/main/resources/db/migration`.
 
 ## Run Locally
 
@@ -122,6 +124,28 @@ postgres://payments:payments@postgres:5432/payments
 
 If an old local Compose volume was created with previous database credentials,
 the PostgreSQL volume must be recreated before the new credentials will apply.
+The same applies to local volumes created before Flyway was introduced: recreate
+the local database volume or baseline it manually before starting this version.
+
+## Database Migrations
+
+Flyway runs automatically when the Spring Boot application starts.
+
+Migration files live in:
+
+```text
+src/main/resources/db/migration
+```
+
+The initial schema is defined by:
+
+```text
+V1__create_ledger_schema.sql
+```
+
+Future schema changes should be added as new versioned files, for example
+`V2__add_transfer_metadata.sql`. Existing migration files should not be edited
+after they have been applied to a shared environment.
 
 ## Load Testing
 
